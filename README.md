@@ -115,7 +115,8 @@ The application UI is designed using Figma with a focus on:
 * A project contains multiple tasks
 * Each task is assigned to a user
 
- Architecture Diagram: *(Add your diagram image here)*
+ Architecture Diagram: *<img width="1912" height="847" alt="Er digram TaskMatrix" src="https://github.com/user-attachments/assets/259d7753-606b-4c35-a482-73c8b14d31e6" />
+*
 
 ---
 
