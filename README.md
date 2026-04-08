@@ -96,7 +96,7 @@ The application UI is designed using Figma with a focus on:
 * Intuitive navigation
 * Responsive design (mobile + desktop)
 
- Figma Link: *[(Add your link here)](https://www.figma.com/design/X2TkTfZD82m7pOnYUuMlXd/Untitled?node-id=0-1&p=f&t=w1V0MAWnWsukzn8t-0)*
+ Figma Link: *[(Click To see The design )](https://www.figma.com/design/X2TkTfZD82m7pOnYUuMlXd/Untitled?node-id=0-1&p=f&t=w1V0MAWnWsukzn8t-0)*
 
 ---
 
