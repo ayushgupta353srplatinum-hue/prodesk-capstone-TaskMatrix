@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import.meta.env.VITE_API_URL
 function Dashboard() {
   const [user, setUser] = useState(null);
 

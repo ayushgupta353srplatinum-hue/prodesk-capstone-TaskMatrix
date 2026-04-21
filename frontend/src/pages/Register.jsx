@@ -5,24 +5,31 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const BASE_URL = import.meta.env.VITE_API_URL;
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    const res = await fetch("http://localhost:5000/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ name, email, password })
-    });
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, email, password })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.msg) {
-      alert("Registered Successfully 🔥");
-      window.location.href = "/";
-    } else {
-      alert("Error");
+      if (data.msg) {
+        alert("Registered Successfully 🔥");
+        window.location.href = "/";
+      } else {
+        alert(data.msg || "Registration failed");
+      }
+    } catch (err) {
+      console.log(err);
+      alert("Server error");
     }
   };
 
@@ -30,8 +37,16 @@ function Register() {
     <form onSubmit={handleRegister}>
       <h2>Register</h2>
 
-      <input placeholder="Name" onChange={(e) => setName(e.target.value)} />
-      <input placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+      <input
+        placeholder="Name"
+        onChange={(e) => setName(e.target.value)}
+      />
+
+      <input
+        placeholder="Email"
+        onChange={(e) => setEmail(e.target.value)}
+      />
+
       <input
         type="password"
         placeholder="Password"
