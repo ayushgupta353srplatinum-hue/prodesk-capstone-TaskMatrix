@@ -20,42 +20,45 @@ function Login() {
 
       const data = await res.json();
 
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        alert("Login Success 🔥");
-        window.location.href = "/dashboard";
-      } else {
-        alert(data.msg || "Login failed");
+      if (!res.ok) {
+        alert(data.msg || "Login failed ❌");
+        return;
       }
+
+      localStorage.setItem("token", data.token);
+      alert("Login Success 🔥");
+      window.location.href = "/dashboard";
+
     } catch (err) {
       console.log(err);
-      alert("Server error");
+      alert("Server down / CORS issue ⚠️");
     }
   };
 
-  return (
-    <form onSubmit={handleLogin}>
+ return (
+  <div className="container">
+    <div className="card">
       <h2>Login</h2>
 
-      <input
-        type="email"
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <form onSubmit={handleLogin}>
+        <input type="email" placeholder="Email"
+          onChange={(e) => setEmail(e.target.value)} />
 
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input type="password" placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)} />
 
-      <button type="submit">Login</button>
+        <button type="submit">Login</button>
+      </form>
 
-      <p onClick={() => (window.location.href = "/register")}>
-        Don't have an account? Create Account
+      <p className="link">
+        Don't have an account?{" "}
+        <span onClick={() => (window.location.href = "/register")}>
+          Create Account
+        </span>
       </p>
-    </form>
-  );
+    </div>
+  </div>
+);
 }
 
 export default Login;

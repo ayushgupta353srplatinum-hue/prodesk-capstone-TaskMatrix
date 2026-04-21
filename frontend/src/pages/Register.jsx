@@ -33,29 +33,40 @@ function Register() {
     }
   };
 
-  return (
-    <form onSubmit={handleRegister}>
+ return (
+  <div className="container">
+    <div className="card">
       <h2>Register</h2>
 
-      <input
-        placeholder="Name"
-        onChange={(e) => setName(e.target.value)}
-      />
+      <form onSubmit={handleRegister}>
+        <input
+          placeholder="Name"
+          onChange={(e) => setName(e.target.value)}
+        />
 
-      <input
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <input
+          placeholder="Email"
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          type="password"
+          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <button type="submit">Register</button>
-    </form>
-  );
+        <button type="submit">Register</button>
+      </form>
+
+      <p className="link">
+        Already have an account?{" "}
+        <span onClick={() => (window.location.href = "/")}>
+          Login
+        </span>
+      </p>
+    </div>
+  </div>
+);
 }
 
 export default Register;
