@@ -18,8 +18,17 @@ app.use(cors({
   credentials: true
 }));
 
-// Yahan badlav kiya hai: "*" ki jagah "/" ya specific middleware use karein
-app.options("/*", cors()); 
+// Browser ke pre-flight (OPTIONS) request ko handle karne ka safe tarika
+// Isse "PathError" nahi aayega
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json());
 
