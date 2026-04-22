@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
-const Stripe = require("stripe"); // Upar import karo
+const Stripe = require("stripe");
 
 dotenv.config();
 const app = express();
@@ -10,23 +10,27 @@ const app = express();
 // DB Connection
 connectDB();
 
-// MIDDLEWARE
-// Purana app.use(cors()) hata do aur ye dalo
+// --- ULTIMATE CORS FIX ---
 app.use(cors({
-  origin: "*", // Ye har kisi ko allow kar dega (Testing ke liye best hai)
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: "*", 
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
+
+// Browser ke pre-flight request ko handle karne ke liye
+app.options("*", cors()); 
+
 app.use(express.json());
 
-// STRIPE INITIALIZATION (Ek hi baar)
+// STRIPE INITIALIZATION
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ROUTES
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/tasks", require("./routes/taskRoutes"));
 
-// PAYMENT ROUTE (Fixed & Single)
+// PAYMENT ROUTE
 app.post("/api/payment/create-checkout-session", async (req, res) => {
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -39,7 +43,7 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
         price_data: {
           currency: "inr",
           product_data: { name: "TaskMatrix Pro 🚀" },
-          unit_amount: 50000, // ₹500.00
+          unit_amount: 50000, 
         },
         quantity: 1
       }],
