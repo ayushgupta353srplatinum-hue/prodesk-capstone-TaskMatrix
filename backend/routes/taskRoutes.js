@@ -3,51 +3,66 @@ const router = express.Router();
 const Task = require("../models/Task");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// CREATE
+// 1. CREATE TASK (POST)
 router.post("/", authMiddleware, async (req, res) => {
-  const task = await Task.create({
-    title: req.body.title,
-    status: req.body.status || "todo",
-    priority: req.body.priority || "low",
-    userId: req.user.id
-  });
-
-  res.json(task);
+  try {
+    const { title, status, priority } = req.body;
+    const newTask = new Task({
+      title,
+      status,
+      priority,
+      userId: req.user.id // Token se user ID mil rahi hai
+    });
+    const savedTask = await newTask.save();
+    res.status(201).json(savedTask);
+  } catch (err) {
+    res.status(500).json({ error: "Task create nahi ho paya" });
+  }
 });
 
-// READ
+// 2. READ ALL TASKS OF LOGGED-IN USER (GET)
 router.get("/", authMiddleware, async (req, res) => {
-  const tasks = await Task.find({ userId: req.user.id });
-  res.json(tasks);
+  try {
+    const tasks = await Task.find({ userId: req.user.id });
+    res.status(200).json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: "Tasks fetch nahi ho paye" });
+  }
 });
 
-// UPDATE
+// 3. UPDATE TASK (PUT)
 router.put("/:id", authMiddleware, async (req, res) => {
-  const task = await Task.findById(req.params.id);
+  try {
+    // Check ownership: Kya ye task isi user ka hai?
+    let task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ msg: "Task not found" });
 
-  if (!task || task.userId.toString() !== req.user.id) {
-    return res.status(403).json({ msg: "Not allowed" });
+    if (task.userId.toString() !== req.user.id) {
+      return res.status(403).json({ msg: "Unauthorized" });
+    }
+
+    task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(task);
+  } catch (err) {
+    res.status(500).json({ error: "Update failed" });
   }
-
-  task.title = req.body.title ?? task.title;
-  task.status = req.body.status ?? task.status;
-  task.priority = req.body.priority ?? task.priority;
-
-  await task.save();
-
-  res.json(task);
 });
 
-// DELETE
+// 4. DELETE TASK (DELETE)
 router.delete("/:id", authMiddleware, async (req, res) => {
-  const task = await Task.findById(req.params.id);
+  try {
+    let task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ msg: "Task not found" });
 
-  if (!task || task.userId.toString() !== req.user.id) {
-    return res.status(403).json({ msg: "Not allowed" });
+    if (task.userId.toString() !== req.user.id) {
+      return res.status(403).json({ msg: "Unauthorized" });
+    }
+
+    await Task.findByIdAndDelete(req.params.id);
+    res.json({ msg: "Task removed successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Delete failed" });
   }
-
-  await task.deleteOne();
-  res.json({ msg: "Deleted" });
 });
 
 module.exports = router;

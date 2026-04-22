@@ -2,43 +2,39 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
-const Stripe = require("stripe");
+const Stripe = require("stripe"); // Upar import karo
 
-// ENV FIRST
 dotenv.config();
-
-// APP
 const app = express();
 
-// DB CONNECT
+// DB Connection
 connectDB();
 
-// STRIPE
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 // MIDDLEWARE
-app.use(cors({ origin: "*" }));
+app.use(cors());
 app.use(express.json());
 
-// ROUTES IMPORT
-const authRoutes = require("./routes/authRoutes");
-const taskRoutes = require("./routes/taskRoutes");
-const authMiddleware = require("./middleware/authMiddleware");
+// STRIPE INITIALIZATION (Ek hi baar)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ROUTES USE
-app.use("/api/auth", authRoutes);
-app.use("/api/tasks", taskRoutes); // 👈 YE LINE MOST IMPORTANT
+// ROUTES
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/tasks", require("./routes/taskRoutes"));
 
-// PAYMENT
-app.post("/api/payment", async (req, res) => {
+// PAYMENT ROUTE (Fixed & Single)
+app.post("/api/payment/create-checkout-session", async (req, res) => {
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({ msg: "Stripe Key missing in .env" });
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [{
         price_data: {
           currency: "inr",
           product_data: { name: "TaskMatrix Pro 🚀" },
-          unit_amount: 50000
+          unit_amount: 50000, // ₹500.00
         },
         quantity: 1
       }],
@@ -48,23 +44,13 @@ app.post("/api/payment", async (req, res) => {
     });
 
     res.json({ id: session.id });
-
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ msg: "Payment error" });
+    console.error("Stripe Error:", err);
+    res.status(500).json({ msg: err.message || "Payment session failed" });
   }
 });
 
-// TEST
-app.get("/", (req, res) => {
-  res.send("API Running");
-});
+app.get("/", (req, res) => res.send("API Running 🚀"));
 
-// PROTECTED
-app.get("/api/protected", authMiddleware, (req, res) => {
-  res.json({ user: req.user });
-});
-
-// START
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server running"));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

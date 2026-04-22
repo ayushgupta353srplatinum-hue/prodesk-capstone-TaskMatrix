@@ -1,193 +1,102 @@
 import { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 
 function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
-  const [editingId, setEditingId] = useState(null);
-
-  const BASE_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
+  const BASE_URL = import.meta.env.VITE_API_URL;
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  useEffect(() => { fetchTasks(); }, []);
 
   const fetchTasks = async () => {
-    const res = await fetch(`${BASE_URL}/api/tasks`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    setTasks(data);
+    try {
+      const res = await fetch(`${BASE_URL}/api/tasks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setTasks(Array.isArray(data) ? data : []);
+    } catch (err) { console.log("Fetch error", err); }
   };
 
-  // ADD TASK
-  const addTask = async () => {
-    if (!title) return;
-
+  const addTask = async (status = "todo") => {
+    if (!title) return alert("Bhai, title toh likho!");
     const res = await fetch(`${BASE_URL}/api/tasks`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ title })
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ title, status, priority: "medium" })
     });
-
-    const newTask = await res.json();
-    setTasks([...tasks, newTask]);
-    setTitle("");
-  };
-
-  // UPDATE TASK
-  const updateTask = async () => {
-    const res = await fetch(`${BASE_URL}/api/tasks/${editingId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ title })
-    });
-
-    const updated = await res.json();
-
-    setTasks(tasks.map(t => t._id === editingId ? updated : t));
-    setEditingId(null);
-    setTitle("");
-  };
-
-  // DELETE TASK
-  const deleteTask = async (id) => {
-    if (!confirm("Delete this task?")) return;
-
-    await fetch(`${BASE_URL}/api/tasks/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    setTasks(tasks.filter(t => t._id !== id));
-  };
-
-  // CHANGE STATUS
-  const changeStatus = async (id, status) => {
-    const res = await fetch(`${BASE_URL}/api/tasks/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ status })
-    });
-
-    const updated = await res.json();
-
-    setTasks(tasks.map(t => t._id === id ? updated : t));
-  };
-
-  // FILTER TASKS
-  const todo = tasks.filter(t => t.status === "todo");
-  const progress = tasks.filter(t => t.status === "progress");
-  const done = tasks.filter(t => t.status === "done");
-
-  // CHART DATA
-  const chartData = [
-    { name: "To Do", count: todo.length },
-    { name: "Progress", count: progress.length },
-    { name: "Done", count: done.length }
-  ];
-
-  // PAYMENT
-  const handlePayment = async () => {
-    const res = await fetch(`${BASE_URL}/api/payment`, { method: "POST" });
     const data = await res.json();
-
-    const stripe = await loadStripe("pk_test_YOUR_KEY");
-    await stripe.redirectToCheckout({ sessionId: data.id });
+    setTasks([...tasks, data]);
+    setTitle("");
   };
 
-  // UI CARD
-  const renderColumn = (title, data) => (
-    <div className="column">
-      <h3>{title}</h3>
-
-      {data.map(t => (
-        <div key={t._id} className="taskCard">
-          <p>{t.title}</p>
-
-          <div className="btnGroup">
-            <button onClick={() => {
-              setEditingId(t._id);
-              setTitle(t.title);
-            }}>Edit</button>
-
-            <button onClick={() => deleteTask(t._id)}>Delete</button>
-          </div>
-
-          <div className="btnGroup">
-            {t.status !== "progress" && (
-              <button onClick={() => changeStatus(t._id, "progress")}>
-                Start
-              </button>
-            )}
-
-            {t.status !== "done" && (
-              <button onClick={() => changeStatus(t._id, "done")}>
-                Done
-              </button>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  const handlePayment = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { method: "POST" });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.msg || "Backend error");
+      
+      // Yahan apni wahi "pk_test_..." wali key daalna jo Stripe dashboard par hai
+      const stripe = await loadStripe("pk_test_XXXXXXXXX_YOUR_KEY"); 
+      await stripe.redirectToCheckout({ sessionId: data.id });
+    } catch (err) {
+      console.error(err);
+      alert("Payment Error: " + err.message);
+    }
+  };
 
   return (
-    <div className="container">
-      <div className="card bigCard">
-        <h2>TaskMatrix Dashboard 🔥</h2>
+    <div className="dashboard-container">
+      <header className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', padding: '20px' }}>
+        <h1>TaskMatrix</h1>
+        <button className="pro-btn" onClick={handlePayment} style={{ background: 'black', color: 'white', borderRadius: '20px', padding: '10px 20px' }}>
+          Upgrade to Pro 🚀
+        </button>
+      </header>
 
-        <div className="inputRow">
-          <input
-            placeholder="Enter Task..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+      <div className="task-input-bar" style={{ display: 'flex', gap: '10px', margin: '20px' }}>
+        <input 
+          value={title} 
+          onChange={(e) => setTitle(e.target.value)} 
+          placeholder="Type your task here..." 
+          style={{ flex: 1, padding: '10px', borderRadius: '8px' }}
+        />
+        <button className="add-task-main-btn" onClick={() => addTask("todo")} style={{ background: '#7c3aed', color: 'white', padding: '10px 20px', borderRadius: '8px' }}>
+          Add Task
+        </button>
+      </div>
 
-          <button onClick={editingId ? updateTask : addTask}>
-            {editingId ? "Update" : "Add"}
-          </button>
+      <div className="board" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', padding: '20px' }}>
+        {/* TO DO COLUMN */}
+        <div className="column todo-col" style={{ background: '#7c3aed', padding: '15px', borderRadius: '15px', color: 'white' }}>
+          <h3>To Do ({tasks.filter(t => t.status === 'todo').length})</h3>
+          {tasks.filter(t => t.status === 'todo').map(t => (
+            <div key={t._id} className="task-card" style={{ background: 'white', color: 'black', margin: '10px 0', padding: '10px', borderRadius: '8px' }}>
+              <p>{t.title}</p>
+            </div>
+          ))}
         </div>
 
-        {/* TASK BOARD */}
-        <div className="taskBoard">
-          {renderColumn("To Do", todo)}
-          {renderColumn("In Progress", progress)}
-          {renderColumn("Done", done)}
+        {/* IN PROGRESS */}
+        <div className="column progress-col" style={{ background: '#facc15', padding: '15px', borderRadius: '15px' }}>
+          <h3>In Progress ({tasks.filter(t => t.status === 'progress').length})</h3>
+          {tasks.filter(t => t.status === 'progress').map(t => (
+            <div key={t._id} className="task-card" style={{ background: 'white', margin: '10px 0', padding: '10px', borderRadius: '8px' }}>
+              <p>{t.title}</p>
+            </div>
+          ))}
         </div>
 
-        {/* CHART */}
-        <h3>Analytics 📊</h3>
-        <BarChart width={400} height={250} data={chartData}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="count" />
-        </BarChart>
-
-        {/* ACTIONS */}
-        <div className="bottomBtns">
-          <button onClick={() => {
-            localStorage.removeItem("token");
-            window.location.href = "/";
-          }}>
-            Logout
-          </button>
-
-          <button className="proBtn" onClick={handlePayment}>
-            Buy Pro 🚀
-          </button>
+        {/* DONE */}
+        <div className="column done-col" style={{ background: '#22c55e', padding: '15px', borderRadius: '15px', color: 'white' }}>
+          <h3>Completed ({tasks.filter(t => t.status === 'done').length})</h3>
+          {tasks.filter(t => t.status === 'done').map(t => (
+            <div key={t._id} className="task-card" style={{ background: 'white', color: 'black', margin: '10px 0', padding: '10px', borderRadius: '8px' }}>
+              <p>{t.title}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
