@@ -11,7 +11,12 @@ const app = express();
 connectDB();
 
 // MIDDLEWARE
-app.use(cors());
+// Purana app.use(cors()) hata do aur ye dalo
+app.use(cors({
+  origin: "*", // Ye har kisi ko allow kar dega (Testing ke liye best hai)
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json());
 
 // STRIPE INITIALIZATION (Ek hi baar)
