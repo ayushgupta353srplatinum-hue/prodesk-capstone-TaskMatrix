@@ -10,7 +10,7 @@ const app = express();
 // DB Connection
 connectDB();
 
-// --- ULTIMATE CORS FIX ---
+// --- ULTIMATE CORS FIX (Express 5+ Friendly) ---
 app.use(cors({
   origin: "*", 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -18,8 +18,8 @@ app.use(cors({
   credentials: true
 }));
 
-// Browser ke pre-flight request ko handle karne ke liye
-app.options("*", cors()); 
+// Yahan badlav kiya hai: "*" ki jagah "/" ya specific middleware use karein
+app.options("/*", cors()); 
 
 app.use(express.json());
 
