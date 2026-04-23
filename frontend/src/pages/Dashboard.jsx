@@ -3,6 +3,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
+// Chart elements ko register karna zaroori hai varna error aayega
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function Dashboard() {
@@ -11,55 +12,86 @@ function Dashboard() {
   const token = localStorage.getItem("token");
   const BASE_URL = import.meta.env.VITE_API_URL;
 
-  useEffect(() => { fetchTasks(); }, []);
+  useEffect(() => { 
+    if (token) {
+      fetchTasks(); 
+    } else {
+      window.location.href = "/";
+    }
+  }, []);
 
   const fetchTasks = async () => {
     try {
       const res = await fetch(`${BASE_URL}/api/tasks`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
       });
       const data = await res.json();
       setTasks(Array.isArray(data) ? data : []);
-    } catch (err) { console.log("Fetch error", err); }
+    } catch (err) { 
+      console.log("Fetch error", err); 
+    }
   };
 
   const addTask = async (status = "todo") => {
     if (!title) return alert("Bhai, task ka naam toh likho!");
-    const res = await fetch(`${BASE_URL}/api/tasks`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ title, status, priority: "medium" })
-    });
-    const data = await res.json();
-    setTasks([...tasks, data]);
-    setTitle("");
+    try {
+      const res = await fetch(`${BASE_URL}/api/tasks`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ title, status, priority: "medium" })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTasks([...tasks, data]);
+        setTitle("");
+      }
+    } catch (err) {
+      console.error("Add task error:", err);
+    }
   };
 
+  // Chart Data calculation
   const chartData = {
     labels: ["Todo", "Progress", "Done"],
     datasets: [{
       data: [
-        tasks.filter(t => t.status === 'todo').length,
-        tasks.filter(t => t.status === 'progress').length,
-        tasks.filter(t => t.status === 'done').length
+        tasks.filter(t => t.status === 'todo').length || 0,
+        tasks.filter(t => t.status === 'progress').length || 0,
+        tasks.filter(t => t.status === 'done').length || 0
       ],
       backgroundColor: ["#7c3aed", "#facc15", "#22c55e"],
+      hoverOffset: 4,
       borderWidth: 0,
     }]
   };
 
   const handlePayment = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { method: "POST" });
+      const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
       const data = await res.json();
-      const stripe = await loadStripe("pk_test_XXXXXXXXXXXX"); // Apni Key dalo yahan
-      await stripe.redirectToCheckout({ sessionId: data.id });
-    } catch (err) { alert("Payment Error: " + err.message); }
+      
+      // Apni Publishable Key yahan dalo
+      const stripe = await loadStripe("pk_test_51TOEJk7FmlTKzixtTWHhP3dQHgQixZVB601iMMGlt0vF6hS3hO4AAbNkjNLKZqpQm4feJXdwwb3i10lWTfvYslRC00oKpRru6Z"); 
+      if (data.id) {
+        await stripe.redirectToCheckout({ sessionId: data.id });
+      }
+    } catch (err) { 
+      alert("Payment Error: " + err.message); 
+    }
   };
 
   return (
     <div className="layout">
-      {/* 1/3 SIDEBAR - AS PER FIGMA */}
+      {/* SIDEBAR */}
       <aside className="sidebar">
         <div className="brand">
           <h2 className="logo-text">TaskMatrix</h2>
@@ -68,8 +100,15 @@ function Dashboard() {
 
         <div className="analytics-box">
           <h4>Your Efficiency 📊</h4>
-          <div className="chart-container">
-            <Pie data={chartData} options={{ maintainAspectRatio: false }} />
+          <div className="chart-container" style={{ height: '200px', position: 'relative' }}>
+            {/* Check if tasks exist to avoid Chart.js errors */}
+            {tasks.length > 0 ? (
+              <Pie data={chartData} options={{ maintainAspectRatio: false }} />
+            ) : (
+              <p style={{fontSize: '12px', color: '#666', textAlign: 'center', marginTop: '20px'}}>
+                No tasks yet! Add some to see analytics.
+              </p>
+            )}
           </div>
         </div>
 
@@ -83,7 +122,7 @@ function Dashboard() {
         </button>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN CONTENT */}
       <main className="main-content">
         <div className="top-bar">
           <div className="input-group">
@@ -91,13 +130,14 @@ function Dashboard() {
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
               placeholder="What needs to be done?" 
+              onKeyPress={(e) => e.key === 'Enter' && addTask("todo")}
             />
             <button onClick={() => addTask("todo")}>Add Task</button>
           </div>
         </div>
 
         <div className="board-grid">
-          {/* TO DO */}
+          {/* TO DO COLUMN */}
           <div className="board-column">
             <div className="column-header todo-h">To Do</div>
             <div className="task-list">
@@ -107,7 +147,7 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* PROGRESS */}
+          {/* PROGRESS COLUMN */}
           <div className="board-column">
             <div className="column-header progress-h">In Progress</div>
             <div className="task-list">
@@ -117,7 +157,7 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* DONE */}
+          {/* DONE COLUMN */}
           <div className="board-column">
             <div className="column-header done-h">Done</div>
             <div className="task-list">
