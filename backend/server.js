@@ -10,7 +10,7 @@ const app = express();
 // DB Connection
 connectDB();
 
-// --- ULTIMATE CORS FIX (Express 5+ Friendly) ---
+// --- CORS SETUP ---
 app.use(cors({
   origin: "*", 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -18,8 +18,7 @@ app.use(cors({
   credentials: true
 }));
 
-// Browser ke pre-flight (OPTIONS) request ko handle karne ka safe tarika
-// Isse "PathError" nahi aayega
+// OPTIONS Fix for Express 5
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
     res.header("Access-Control-Allow-Origin", "*");
@@ -39,7 +38,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/tasks", require("./routes/taskRoutes"));
 
-// PAYMENT ROUTE
+// PAYMENT ROUTE (FIXED)
 app.post("/api/payment/create-checkout-session", async (req, res) => {
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -57,14 +56,15 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
         quantity: 1
       }],
       mode: "payment",
-      success_url: `${process.env.CLIENT_URL}/success`,
-      cancel_url: `${process.env.CLIENT_URL}/dashboard`
+      // Agar Render pe CLIENT_URL nahi set kiya toh localhost pe bhej dega
+      success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/success`,
+      cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`
     });
 
-// server.js ke payment route mein aakhiri line badal do
-res.json({ url: session.url }); // id ki jagah url bhejo
+    console.log("Stripe Session Created!");
+    res.json({ url: session.url }); // Yahan URL bhej rahe hain
   } catch (err) {
-    console.error("Stripe Error:", err);
+    console.error("Stripe Error:", err.message);
     res.status(500).json({ msg: err.message || "Payment session failed" });
   }
 });
@@ -72,4 +72,4 @@ res.json({ url: session.url }); // id ki jagah url bhejo
 app.get("/", (req, res) => res.send("API Running 🚀"));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
