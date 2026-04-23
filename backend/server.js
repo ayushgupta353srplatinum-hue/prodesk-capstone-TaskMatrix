@@ -61,7 +61,8 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
       cancel_url: `${process.env.CLIENT_URL}/dashboard`
     });
 
-    res.json({ id: session.id });
+// server.js ke payment route mein aakhiri line badal do
+res.json({ url: session.url }); // id ki jagah url bhejo
   } catch (err) {
     console.error("Stripe Error:", err);
     res.status(500).json({ msg: err.message || "Payment session failed" });

@@ -72,23 +72,24 @@ function Dashboard() {
   };
 
   const handlePayment = async () => {
-    try {
-      const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { 
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-      const data = await res.json();
-      
-      // Apni Publishable Key yahan dalo
-      const stripe = await loadStripe("pk_test_51TOEJk7FmlTKzixtTWHhP3dQHgQixZVB601iMMGlt0vF6hS3hO4AAbNkjNLKZqpQm4feJXdwwb3i10lWTfvYslRC00oKpRru6Z"); 
-      if (data.id) {
-        await stripe.redirectToCheckout({ sessionId: data.id });
-      }
-    } catch (err) { 
-      alert("Payment Error: " + err.message); 
-    }
-  };
+  try {
+    const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    
+    const data = await res.json();
 
+    if (data.url) {
+      // Naya tarika: Seedha Stripe ke checkout URL par bhej do
+      window.location.href = data.url;
+    } else {
+      alert("Bhai, backend se URL nahi aaya!");
+    }
+  } catch (err) { 
+    alert("Payment Error: " + err.message); 
+  }
+};
   return (
     <div className="layout">
       {/* SIDEBAR */}
