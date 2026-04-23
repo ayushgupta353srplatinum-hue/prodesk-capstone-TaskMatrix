@@ -9,18 +9,19 @@ router.post("/", authMiddleware, async (req, res) => {
     const { title, status, priority } = req.body;
     const newTask = new Task({
       title,
-      status,
-      priority,
-      userId: req.user.id // Token se user ID mil rahi hai
+      status: status || "todo",
+      priority: priority ? priority.toLowerCase() : "low", // lowercase fix
+      userId: req.user.id
     });
     const savedTask = await newTask.save();
     res.status(201).json(savedTask);
   } catch (err) {
-    res.status(500).json({ error: "Task create nahi ho paya" });
+    console.error("Task Create Error:", err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// 2. READ ALL TASKS OF LOGGED-IN USER (GET)
+// 2. READ ALL TASKS (GET)
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const tasks = await Task.find({ userId: req.user.id });
@@ -33,7 +34,6 @@ router.get("/", authMiddleware, async (req, res) => {
 // 3. UPDATE TASK (PUT)
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    // Check ownership: Kya ye task isi user ka hai?
     let task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ msg: "Task not found" });
 
@@ -41,7 +41,11 @@ router.put("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ msg: "Unauthorized" });
     }
 
-    task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Agar body mein priority hai toh use lowercase karke update karo
+    const updateData = { ...req.body };
+    if (updateData.priority) updateData.priority = updateData.priority.toLowerCase();
+
+    task = await Task.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json(task);
   } catch (err) {
     res.status(500).json({ error: "Update failed" });
