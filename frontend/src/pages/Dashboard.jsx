@@ -64,11 +64,31 @@ function Dashboard() {
     } catch (err) { setTasks(originalTasks); }
   };
 
-  const handlePayment = async () => {
-    const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { method: "POST" });
+// ... baaki import same rahenge
+
+const handlePayment = async () => {
+  try {
+    const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { 
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}` // Token bhejna zaroori hai pro status update ke liye
+      }
+    });
     const data = await res.json();
-    if (data.url) window.location.href = data.url;
-  };
+    
+    if (data.url) {
+      // Direct redirect to Stripe
+      window.location.assign(data.url); 
+    } else {
+      alert("Payment session create nahi ho pa raha bhai!");
+    }
+  } catch (err) {
+    console.error("Stripe Error:", err);
+    alert("Backend connection fail ho gaya!");
+  }
+};
+
+// ... baaki return statement same rahega
 
   return (
     <div className="layout">
