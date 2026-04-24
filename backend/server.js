@@ -10,31 +10,46 @@ const app = express();
 // 1. Database Connection
 connectDB();
 
-// 2. --- FIXED CORS SETUP ---
-// Sabse simple tareeka: app.use(cors()) ko pehle rakho, 
-// ye apne aap saare OPTIONS requests handle kar leta hai.
+// 2. --- DEPLOYMENT READY CORS SETUP ---
+// Localhost aur Vercel dono ko allow kar rahe hain
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://prodesk-capstone-task-matrix.vercel.app"
+];
+
 app.use(cors({
-  origin: "http://localhost:5173", 
+  origin: function (origin, callback) {
+    // Agar origin list mein hai ya local hai toh allow karo
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS Blocked: This origin is not allowed by Ashmit's Server"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
+// 3. --- EXPRESS 5 COMPATIBILITY FIX ---
+// Manual wildcard routes ko hata diya hai kyunki CORS middleware khud handle kar lega
+// Ye line Express 5 ke 'PathError' ko hamesha ke liye khatam kar degi
 app.use(express.json());
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// 3. --- ROUTES ---
+// 4. --- ROUTES ---
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/tasks", require("./routes/taskRoutes"));
 
-// 4. --- PAYMENT ROUTE ---
+// 5. --- PAYMENT ROUTE ---
 app.post("/api/payment/create-checkout-session", async (req, res) => {
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
       return res.status(500).json({ msg: "Stripe Key missing in .env" });
     }
 
+    // Deployment check: Render pe CLIENT_URL set karna zaroori hai
     const clientURL = process.env.CLIENT_URL || "http://localhost:5173";
 
     const session = await stripe.checkout.sessions.create({
@@ -42,8 +57,11 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
       line_items: [{
         price_data: {
           currency: "inr",
-          product_data: { name: "TaskMatrix Pro " },
-          unit_amount: 50000, 
+          product_data: { 
+            name: "TaskMatrix Pro 🚀",
+            description: "Get unlimited access to all pro features"
+          },
+          unit_amount: 50000, // ₹500
         },
         quantity: 1
       }],
@@ -52,18 +70,18 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
       cancel_url: `${clientURL}/dashboard`
     });
 
-    console.log(" Stripe Session Created: ", session.id);
+    console.log("✅ Stripe Session Created Successfully");
     res.json({ url: session.url }); 
   } catch (err) {
-    console.error(" Stripe Error:", err.message);
+    console.error("❌ Stripe Error:", err.message);
     res.status(500).json({ msg: err.message || "Payment session failed" });
   }
 });
 
-app.get("/", (req, res) => res.send("API Running "));
+app.get("/", (req, res) => res.send("TaskMatrix API is Running Fine! 🚀"));
 
-// 5. --- SERVER START ---
+// 6. --- SERVER START ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-    console.log(` Server running on port ${PORT}`);
+    console.log(`🚀 Server is flying on port ${PORT}`);
 });
