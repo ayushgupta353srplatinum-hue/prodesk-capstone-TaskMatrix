@@ -8,8 +8,8 @@ function Success() {
   useEffect(() => {
     // Premium Success Popup
     Swal.fire({
-      title: 'Payment Successful! 🎉',
-      text: 'Bhai, ab aap TaskMatrix Pro user ban chuke hain!',
+      title: 'Payment Successful! ',
+      text: 'TaskMatrix Pro activated. Enjoy your enhanced experience!',
       icon: 'success',
       confirmButtonColor: '#facc15',
       confirmButtonText: 'Let’s Go to Dashboard',
