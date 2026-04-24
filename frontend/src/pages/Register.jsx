@@ -22,7 +22,7 @@ function Register() {
       const data = await res.json();
 
       if (data.msg) {
-        alert("Registered Successfully 🔥");
+        alert("Registered Successfully ");
         window.location.href = "/";
       } else {
         alert(data.msg || "Registration failed");

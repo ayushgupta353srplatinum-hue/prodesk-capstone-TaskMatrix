@@ -41,7 +41,6 @@ router.put("/:id", authMiddleware, async (req, res) => {
       return res.status(403).json({ msg: "Unauthorized" });
     }
 
-    // Agar body mein priority hai toh use lowercase karke update karo
     const updateData = { ...req.body };
     if (updateData.priority) updateData.priority = updateData.priority.toLowerCase();
 

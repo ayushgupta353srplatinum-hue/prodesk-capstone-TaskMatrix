@@ -31,14 +31,11 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// STRIPE INITIALIZATION
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // ROUTES
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/tasks", require("./routes/taskRoutes"));
-
-// PAYMENT ROUTE (FIXED)
 app.post("/api/payment/create-checkout-session", async (req, res) => {
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -50,13 +47,12 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
       line_items: [{
         price_data: {
           currency: "inr",
-          product_data: { name: "TaskMatrix Pro 🚀" },
+          product_data: { name: "TaskMatrix Pro " },
           unit_amount: 50000, 
         },
         quantity: 1
       }],
       mode: "payment",
-      // Agar Render pe CLIENT_URL nahi set kiya toh localhost pe bhej dega
       success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/success`,
       cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/dashboard`
     });
@@ -69,7 +65,7 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => res.send("API Running 🚀"));
+app.get("/", (req, res) => res.send("API Running "));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));

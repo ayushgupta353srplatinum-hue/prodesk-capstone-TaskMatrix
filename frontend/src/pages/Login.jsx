@@ -21,17 +21,17 @@ function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.msg || "Login failed ❌");
+        alert(data.msg || "Login failed ");
         return;
       }
 
       localStorage.setItem("token", data.token);
-      alert("Login Success 🔥");
+      alert("Login Success");
       window.location.href = "/dashboard";
 
     } catch (err) {
       console.log(err);
-      alert("Server down / CORS issue ⚠️");
+      alert("Server down / CORS issue ");
     }
   };
 

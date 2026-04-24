@@ -101,7 +101,7 @@ function Dashboard() {
         </div>
         <div className="sidebar-bottom">
           <button className="pro-card-btn" onClick={handlePayment} style={{background: '#facc15', color: 'black', width: '100%', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '15px'}}>
-            Upgrade to Pro 🚀
+            Upgrade to Pro 
           </button>
           <button className="logout-btn" onClick={() => {localStorage.clear(); window.location.href="/"}} style={{background: 'transparent', color: '#888', border: 'none', cursor: 'pointer'}}>
             Logout
