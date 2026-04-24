@@ -45,11 +45,8 @@ app.use("/api/tasks", require("./routes/taskRoutes"));
 // 5. --- PAYMENT ROUTE ---
 app.post("/api/payment/create-checkout-session", async (req, res) => {
   try {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return res.status(500).json({ msg: "Stripe Key missing in .env" });
-    }
-
-    // Deployment check: Render pe CLIENT_URL set karna zaroori hai
+    // 1. Pehle check karo Render pe CLIENT_URL set hai ya nahi
+    // Agar nahi hai toh fallback localhost pe jayega (only for local testing)
     const clientURL = process.env.CLIENT_URL || "http://localhost:5173";
 
     const session = await stripe.checkout.sessions.create({
@@ -57,27 +54,23 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
       line_items: [{
         price_data: {
           currency: "inr",
-          product_data: { 
-            name: "TaskMatrix Pro 🚀",
-            description: "Get unlimited access to all pro features"
-          },
-          unit_amount: 50000, // ₹500
+          product_data: { name: "TaskMatrix Pro 🚀" },
+          unit_amount: 50000,
         },
         quantity: 1
       }],
       mode: "payment",
+      // Sabse zaroori: Ye URL browser ke URL se match hona chahiye
       success_url: `${clientURL}/success`,
       cancel_url: `${clientURL}/dashboard`
     });
 
-    console.log("✅ Stripe Session Created Successfully");
     res.json({ url: session.url }); 
   } catch (err) {
-    console.error("❌ Stripe Error:", err.message);
-    res.status(500).json({ msg: err.message || "Payment session failed" });
+    console.error("Stripe Error:", err.message);
+    res.status(500).json({ msg: err.message });
   }
 });
-
 app.get("/", (req, res) => res.send("TaskMatrix API is Running Fine! 🚀"));
 
 // 6. --- SERVER START ---

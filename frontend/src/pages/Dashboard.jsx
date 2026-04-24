@@ -70,24 +70,18 @@ const handlePayment = async () => {
   try {
     const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { 
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}` // Token bhejna zaroori hai pro status update ke liye
-      }
+      headers: { "Content-Type": "application/json" }
     });
     const data = await res.json();
     
     if (data.url) {
-      // Direct redirect to Stripe
+      // Direct assignment for better security handling
       window.location.assign(data.url); 
-    } else {
-      alert("Payment session create nahi ho pa raha bhai!");
     }
   } catch (err) {
-    console.error("Stripe Error:", err);
-    alert("Backend connection fail ho gaya!");
+    console.log("Payment Error", err);
   }
 };
-
 // ... baaki return statement same rahega
 
   return (
