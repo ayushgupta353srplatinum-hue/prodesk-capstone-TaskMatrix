@@ -9,7 +9,7 @@ dotenv.config();
 
 // Debugging ke liye (Sirf startup pe dikhega)
 console.log("🚀 Server starting...");
-console.log("AI KEY Status:", process.env.GEMINI_API_KEY ? "Found" : "Not Found");
+console.log("AI KEY Status:", process.env.OPENROUTER_API_KEY ? "Found" : "Not Found");
 
 const app = express();
 

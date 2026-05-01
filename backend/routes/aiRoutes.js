@@ -1,34 +1,47 @@
 const express = require("express");
 const router = express.Router();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-// Gemini Initialize
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 router.post("/suggest", async (req, res) => {
   const { title } = req.body;
 
   if (!title) {
-    return res.status(400).json({ success: false, message: "Title is required" });
+    return res.status(400).json({ error: "Title is required" });
   }
 
   try {
-    // 1. Model select (Flash is faster and free)
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-3.5-turbo", // free/cheap model
+        messages: [
+          {
+            role: "user",
+            content: `Give 2-3 short steps to complete this task: ${title}`
+          }
+        ]
+      })
+    });
 
-    const prompt = `Give me a short, 1-sentence action plan to complete this task: "${title}". Just the steps, no extra talk.`;
+    const data = await response.json();
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    if (!response.ok) {
+      console.log("OPENROUTER ERROR:", data);
+      return res.status(500).json({ error: "AI failed", message: data });
+    }
+
+    const text = data.choices[0].message.content;
 
     res.json({ success: true, data: text });
-  } catch (error) {
-    console.error("Gemini Error Details:", error.message);
-    res.status(500).json({ 
-      success: false, 
-      message: "AI fail ho gaya!", 
-      error: error.message // Isse hume Render logs mein asli wajah dikhegi
+
+  } catch (err) {
+    console.log("FINAL ERROR:", err);
+    res.status(500).json({
+      error: "AI failed",
+      message: err.message
     });
   }
 });
