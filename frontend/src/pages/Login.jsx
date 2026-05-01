@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Toaster, toast } from "sonner";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -8,6 +9,11 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    // ✅ frontend validation
+    if (!email || !password) {
+      return toast.error("All fields are required!");
+    }
 
     try {
       const res = await fetch(`${BASE_URL}/api/auth/login`, {
@@ -21,44 +27,49 @@ function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.msg || "Login failed ");
-        return;
+        return toast.error(data.msg || "Login failed");
       }
 
       localStorage.setItem("token", data.token);
-      alert("Login Success");
-      window.location.href = "/dashboard";
+      toast.success("Login Success ✅");
+
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1200);
 
     } catch (err) {
-      console.log(err);
-      alert("Server down / CORS issue ");
+      toast.error("Server down / CORS issue");
     }
   };
 
- return (
-  <div className="container">
-    <div className="card">
-      <h2>Login</h2>
+  return (
+    <>
+      <Toaster position="top-right" richColors />
 
-      <form onSubmit={handleLogin}>
-        <input type="email" placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)} />
+      <div className="container">
+        <div className="card">
+          <h2>Login</h2>
 
-        <input type="password" placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)} />
+          <form onSubmit={handleLogin}>
+            <input type="email" placeholder="Email"
+              onChange={(e) => setEmail(e.target.value)} />
 
-        <button type="submit">Login</button>
-      </form>
+            <input type="password" placeholder="Password"
+              onChange={(e) => setPassword(e.target.value)} />
 
-      <p className="link">
-        Don't have an account?{" "}
-        <span onClick={() => (window.location.href = "/register")}>
-          Create Account
-        </span>
-      </p>
-    </div>
-  </div>
-);
+            <button type="submit">Login</button>
+          </form>
+
+          <p className="link">
+            Don't have an account?{" "}
+            <span onClick={() => (window.location.href = "/register")}>
+              Create Account
+            </span>
+          </p>
+        </div>
+      </div>
+    </>
+  );
 }
 
 export default Login;

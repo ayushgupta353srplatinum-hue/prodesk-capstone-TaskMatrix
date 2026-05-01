@@ -220,3 +220,36 @@
   cursor: pointer;
   font-weight: bold;
 }
+/* ✅ Level 3: Mobile Responsiveness */
+
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column; /* Sidebar upar, content niche */
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    padding: 10px;
+  }
+
+  .nav-links {
+    display: flex; /* Mobile pe menu horizontal dikhega */
+    gap: 10px;
+    overflow-x: auto;
+  }
+
+  .board-grid {
+    grid-template-columns: 1fr; /* Todo, Progress, Done ek ke niche ek */
+    gap: 20px;
+  }
+
+  .top-bar {
+    flex-direction: column; /* Input aur Buttons stack ho jayenge */
+    gap: 10px;
+  }
+
+  .search-bar {
+    width: 100%;
+  }
+}

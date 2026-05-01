@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Toaster, toast } from "sonner";
 
 function Register() {
   const [name, setName] = useState("");
@@ -9,6 +10,15 @@ function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+
+    // ✅ validation
+    if (!name || !email || !password) {
+      return toast.error("All fields required!");
+    }
+
+    if (password.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
 
     try {
       const res = await fetch(`${BASE_URL}/api/auth/register`, {
@@ -21,52 +31,60 @@ function Register() {
 
       const data = await res.json();
 
-      if (data.msg) {
-        alert("Registered Successfully ");
-        window.location.href = "/";
-      } else {
-        alert(data.msg || "Registration failed");
+      if (!res.ok) {
+        return toast.error(data.msg || "Registration failed");
       }
+
+      toast.success("Registered Successfully 🎉");
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1200);
+
     } catch (err) {
-      console.log(err);
-      alert("Server error");
+      toast.error("Server error");
     }
   };
 
- return (
-  <div className="container">
-    <div className="card">
-      <h2>Register</h2>
+  return (
+    <>
+      <Toaster position="top-right" richColors />
 
-      <form onSubmit={handleRegister}>
-        <input
-          placeholder="Name"
-          onChange={(e) => setName(e.target.value)}
-        />
+      <div className="container">
+        <div className="card">
+          <h2>Register</h2>
 
-        <input
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
+          <form onSubmit={handleRegister}>
+            <input
+              placeholder="Name"
+              onChange={(e) => setName(e.target.value)}
+            />
 
-        <input
-          type="password"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+            <input
+              type="email"
+              placeholder="Email"
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-        <button type="submit">Register</button>
-      </form>
+            <input
+              type="password"
+              placeholder="Password"
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
-      <p className="link">
-        Already have an account?{" "}
-        <span onClick={() => (window.location.href = "/")}>
-          Login
-        </span>
-      </p>
-    </div>
-  </div>
-);
+            <button type="submit">Register</button>
+          </form>
+
+          <p className="link">
+            Already have an account?{" "}
+            <span onClick={() => (window.location.href = "/")}>
+              Login
+            </span>
+          </p>
+        </div>
+      </div>
+    </>
+  );
 }
 
 export default Register;
