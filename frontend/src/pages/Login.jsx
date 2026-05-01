@@ -10,7 +10,6 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // ✅ frontend validation
     if (!email || !password) {
       return toast.error("All fields are required!");
     }
@@ -31,7 +30,7 @@ function Login() {
       }
 
       localStorage.setItem("token", data.token);
-      toast.success("Login Success ✅");
+      toast.success("Login Success ");
 
       setTimeout(() => {
         window.location.href = "/dashboard";

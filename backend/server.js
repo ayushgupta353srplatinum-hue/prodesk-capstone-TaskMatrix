@@ -8,18 +8,15 @@ const rateLimit = require("express-rate-limit");
 dotenv.config();
 
 // Debugging ke liye (Sirf startup pe dikhega)
-console.log("🚀 Server starting...");
+console.log(" Server starting...");
 console.log("AI KEY Status:", process.env.OPENROUTER_API_KEY ? "Found" : "Not Found");
 
 const app = express();
 
-// ✅ RENDER/VERCEL FIX: Rate limiting behind proxy
 app.set("trust proxy", 1);
 
-// ✅ DB CONNECT
 connectDB();
 
-// ✅ SECURITY: RATE LIMITERS
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -33,8 +30,6 @@ const authLimiter = rateLimit({
 });
 
 app.use(globalLimiter);
-
-// ✅ CORS FIX: Dono Vercel aur Render URLs ko allow karo
 const allowedOrigins = [
   "http://localhost:5173",
   "https://prodesk-capstone-task-matrix.vercel.app",
@@ -55,25 +50,24 @@ app.use(
   })
 );
 
-// ✅ BODY PARSER
+
 app.use(express.json());
 
-// ✅ STRIPE INIT
+
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 // ---------------- ROUTES ----------------
 
-// 🔐 AUTH
+
 app.use("/api/auth", authLimiter, require("./routes/authRoutes"));
 
-// 📋 TASKS
+
 app.use("/api/tasks", require("./routes/taskRoutes"));
 
-// 🤖 AI ROUTE (Gemini)
+
 // Note: Make sure your aiRoutes.js file exists in the routes folder!
 app.use("/api/ai", require("./routes/aiRoutes"));
 
-// 💳 PAYMENT
 app.post("/api/payment/create-checkout-session", async (req, res) => {
   try {
     if (!stripe) return res.status(500).json({ msg: "Stripe not configured" });
@@ -85,7 +79,7 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
         {
           price_data: {
             currency: "inr",
-            product_data: { name: "TaskMatrix Pro 🚀" },
+            product_data: { name: "TaskMatrix Pro " },
             unit_amount: 50000,
           },
           quantity: 1,
@@ -101,17 +95,15 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
   }
 });
 
-// ✅ HEALTH CHECK
+
 app.get("/", (req, res) => {
-  res.send("TaskMatrix API is Running Fine! 🚀");
+  res.send("TaskMatrix API is Running Fine! ");
 });
 
-// ❌ 404 HANDLER
 app.use((req, res) => {
   res.status(404).json({ msg: "Route not found - Check path carefully!" });
 });
 
-// 🧠 GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err.stack);
   res.status(500).json({
@@ -120,8 +112,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 🚀 START SERVER
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(` Server running on port ${PORT}`);
 });

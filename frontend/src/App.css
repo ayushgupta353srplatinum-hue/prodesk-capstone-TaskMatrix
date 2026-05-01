@@ -59,7 +59,7 @@
 .nav-item {
   padding: 12px 20px;
   margin-bottom: 10px;
-  border-radius: 999px; /* 🔥 FIX: full oval */
+  border-radius: 999px; 
   cursor: pointer;
   color: #ccc;
   font-weight: 500;
@@ -70,7 +70,7 @@
 }
 
 .nav-item.active {
-  background: #facc15;   /* 🔥 yellow bg */
+  background: #facc15; 
   color: black;
   border-radius: 999px;
   padding: 12px 20px;
@@ -78,11 +78,11 @@
 }
 
 .nav-badge {
-  background: #3b82f6;   /* 🔥 blue */
+  background: #3b82f6; 
   color: white;
   min-width: 22px;
   height: 22px;
-  border-radius: 999px;  /* 🔥 circle */
+  border-radius: 999px;  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,15 +93,13 @@
 .nav-item:hover {
   background: rgba(250, 204, 21, 0.15);
 }
-
-/* 🔥 BADGE FIX */
 .nav-badge {
   background: var(--blue);
   color: white;
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 999px; /* 🔥 perfect circle */
+  border-radius: 999px; 
   font-size: 12px;
   display: flex;
   align-items: center;

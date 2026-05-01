@@ -49,7 +49,7 @@ function Dashboard() {
       if (res.ok) {
         setTasks([...tasks, data]);
         setTitle("");
-        toast.success("Task added ✅");
+        toast.success("Task added ");
       } else {
         toast.error(data.msg || "Failed to add task");
       }
@@ -126,7 +126,7 @@ function Dashboard() {
 
       if (!res.ok) {
         setTasks(originalTasks);
-        toast.error("Delete failed ❌");
+        toast.error("Delete failed ");
       } else {
         toast.success("Task deleted 🗑️");
       }
