@@ -1,9 +1,9 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
+const fetch = require("node-fetch");
 
 const router = express.Router();
 
-// ✅ AI specific rate limiter (important)
 const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -14,7 +14,6 @@ router.post("/suggest", aiLimiter, async (req, res) => {
   try {
     const { title } = req.body;
 
-    // ✅ Proper validation
     if (!title || title.length < 3) {
       return res.status(400).json({
         success: false,
@@ -29,7 +28,7 @@ router.post("/suggest", aiLimiter, async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo",
+        model: "openai/gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -61,16 +60,18 @@ Format:
       });
     }
 
-    let parsed;
+    let text = data.choices[0].message.content;
 
-    try {
-      parsed = JSON.parse(data.choices[0].message.content);
-    } catch {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+    if (!jsonMatch) {
       return res.status(500).json({
         success: false,
-        error: "Invalid AI response format"
+        error: "AI returned invalid format"
       });
     }
+
+    const parsed = JSON.parse(jsonMatch[0]);
 
     res.json({
       success: true,
