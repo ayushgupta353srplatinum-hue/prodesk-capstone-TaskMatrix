@@ -23,12 +23,11 @@ function Dashboard() {
       });
       const data = await res.json();
       setTasks(Array.isArray(data) ? data : []);
-    } catch (err) { 
-      toast.error("Failed to fetch tasks"); 
+    } catch {
+      toast.error("Failed to fetch tasks");
     }
   };
 
-  // ✅ ADD TASK (Toast version)
   const addTask = async (status = "todo") => {
     if (!title) return toast.error("Please enter a task title!");
 
@@ -51,12 +50,12 @@ function Dashboard() {
       } else {
         toast.error(data.msg || "Failed to add task");
       }
-    } catch (err) {
+    } catch {
       toast.error("Server error!");
     }
   };
 
-  // 🤖 AI SUGGEST
+  // 🤖 AI Suggest
   const handleAiSuggest = async () => {
     if (!title) return toast.error("Pehle title likho!");
 
@@ -81,7 +80,7 @@ function Dashboard() {
         toast.error("AI failed!");
       }
 
-    } catch (err) {
+    } catch {
       toast.error("Backend connect nahi ho raha!");
     }
 
@@ -109,7 +108,7 @@ function Dashboard() {
         toast.error("Update failed");
       }
 
-    } catch (err) { 
+    } catch { 
       toast.error("Edit failed"); 
     }
   };
@@ -131,12 +130,56 @@ function Dashboard() {
         toast.success("Task deleted 🗑️");
       }
 
-    } catch (err) { 
+    } catch { 
       setTasks(originalTasks);
       toast.error("Server error!");
     }
   };
 
+  // 🔥 FORMAT TASK TEXT (MAIN FIX)
+  // 🔥 FORMAT TASK TEXT (FIXED: NO BLANK POINTS & SMALLER TEXT)
+  const renderTaskContent = (text, isDone) => {
+    const parts = text.split("(Steps:");
+    const mainTitle = parts[0];
+    const stepsText = parts[1];
+
+    return (
+      <div style={{ textDecoration: isDone ? "line-through" : "none" }}>
+        {/* TITLE */}
+        <h4 style={{
+          fontSize: "15px", // Thoda chhota kiya
+          fontWeight: "700",
+          marginBottom: "4px",
+          color: "#111"
+        }}>
+          {mainTitle}
+        </h4>
+
+        {/* STEPS */}
+        {stepsText && (
+          <div style={{
+            fontSize: "12px", // Steps ka size thoda aur kam kiya
+            color: "#555",
+            lineHeight: "1.4" // Line height kam ki space bachane ke liye
+          }}>
+            {stepsText
+              .replace(")", "")
+              .split(/\d+\./)
+              .map(s => s.trim()) // Saare extra spaces trim kiye
+              .filter(step => step.length > 0) // Isse wo "blank 1." gayab ho jayega
+              .map((step, i) => (
+                <div key={i} style={{ marginBottom: "3px", display: "flex", gap: "5px" }}>
+                  <span style={{ fontWeight: "700", color: "#000", flexShrink: 0 }}>
+                    {i + 1}.
+                  </span>
+                  <span>{step}</span>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+    );
+  };
   const handlePayment = async () => {
     try {
       const res = await fetch(`${BASE_URL}/api/payment/create-checkout-session`, { 
@@ -146,14 +189,13 @@ function Dashboard() {
 
       const data = await res.json();
       if (data.url) window.location.assign(data.url); 
-    } catch (err) { 
+    } catch { 
       toast.error("Payment error"); 
     }
   };
 
   return (
     <>
-      {/* ✅ TOASTER */}
       <Toaster position="top-right" richColors />
 
       <div className="layout">
@@ -175,19 +217,11 @@ function Dashboard() {
           </div>
 
           <div className="sidebar-bottom">
-            <button 
-              className="pro-card-btn" 
-              onClick={handlePayment} 
-              style={{background: '#facc15', color: 'black', width: '100%', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '15px'}}
-            >
+            <button onClick={handlePayment} style={{background: '#facc15', color: 'black', width: '100%', padding: '12px', borderRadius: '10px', fontWeight: 'bold'}}>
               Upgrade to Pro
             </button>
 
-            <button 
-              className="logout-btn" 
-              onClick={() => {localStorage.clear(); window.location.href="/"}} 
-              style={{background: 'transparent', color: '#888', border: 'none', cursor: 'pointer'}}
-            >
+            <button onClick={() => {localStorage.clear(); window.location.href="/"}} style={{background: 'transparent', color: '#888', border: 'none', cursor: 'pointer'}}>
               Logout
             </button>
           </div>
@@ -204,17 +238,11 @@ function Dashboard() {
               onKeyDown={(e) => e.key === 'Enter' && addTask()} 
             />
             
-            <button 
-              onClick={handleAiSuggest}
-              style={{ background: '#6366f1', color: 'white', padding: '10px 20px', borderRadius: '30px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}
-            >
+            <button onClick={handleAiSuggest} style={{ background: '#6366f1', color: 'white', padding: '10px 20px', borderRadius: '30px', fontWeight: 'bold' }}>
               {isAiLoading ? "Thinking..." : "✨ AI Suggest"}
             </button>
 
-            <button 
-              onClick={() => addTask()} 
-              style={{ background: '#000', color: '#facc15', border: '2px solid #facc15', padding: '10px 25px', borderRadius: '30px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
+            <button onClick={() => addTask()} style={{ background: '#000', color: '#facc15', padding: '10px 25px', borderRadius: '30px', fontWeight: 'bold' }}>
               + Add Task
             </button>
           </div>
@@ -229,27 +257,19 @@ function Dashboard() {
                 <div className="task-list">
                   {tasks.filter(t => t.status === status).map(t => (
                     <div key={t._id} className="task-card" style={{ background: '#fff', padding: '15px', borderRadius: '12px', marginBottom: '15px', border: '1px solid #eee' }}>
-                      <div className="task-content">
-                        <h4 style={{ textDecoration: status === "done" ? "line-through" : "none", marginBottom: '15px', color: '#333' }}>
-                          {t.title}
-                        </h4>
-                      </div>
+                      
+                      {renderTaskContent(t.title, status === "done")}
 
-                      <div className="card-actions-row" style={{ display: 'flex', gap: '10px' }}>
-                        <button 
-                          style={{ flex: 1, background: '#111', color: '#fff', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }} 
-                          onClick={() => editTask(t._id, t.title)}
-                        >
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                        <button onClick={() => editTask(t._id, t.title)} style={{ flex: 1, background: '#111', color: '#fff', padding: '8px', borderRadius: '6px' }}>
                           ✎ Edit
                         </button>
 
-                        <button 
-                          style={{ flex: 1, background: '#fee2e2', color: '#991b1b', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }} 
-                          onClick={() => deleteTask(t._id)}
-                        >
+                        <button onClick={() => deleteTask(t._id)} style={{ flex: 1, background: '#fee2e2', color: '#991b1b', padding: '8px', borderRadius: '6px' }}>
                           🗑 Delete
                         </button>
                       </div>
+
                     </div>
                   ))}
                 </div>
