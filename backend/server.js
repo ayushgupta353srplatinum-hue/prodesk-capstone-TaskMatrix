@@ -7,16 +7,14 @@ const rateLimit = require("express-rate-limit");
 
 dotenv.config();
 
-// Debugging ke liye (Sirf startup pe dikhega)
-console.log(" Server starting...");
-console.log("AI KEY Status:", process.env.OPENROUTER_API_KEY ? "Found" : "Not Found");
-
 const app = express();
 
 app.set("trust proxy", 1);
 
+// DB Connect
 connectDB();
 
+// ---------------- RATE LIMIT ----------------
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -30,10 +28,10 @@ const authLimiter = rateLimit({
 });
 
 app.use(globalLimiter);
+
+// ---------------- CORS (FIXED ✅) ----------------
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://prodesk-capstone-task-matrix.vercel.app",
-  "https://prodesk-capstone-taskmatrix-2.onrender.com" // Tera backend URL bhi safe side add kar diya
+  "https://prodesk-capstone-task-matrix.vercel.app/" 
 ];
 
 app.use(
@@ -42,7 +40,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.log("CORS Blocked for origin:", origin); // Debugging ke liye
+        console.log("CORS Blocked:", origin);
         callback(new Error("CORS blocked"));
       }
     },
@@ -50,36 +48,33 @@ app.use(
   })
 );
 
-
+// ---------------- MIDDLEWARE ----------------
 app.use(express.json());
 
-
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+// ---------------- STRIPE ----------------
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 // ---------------- ROUTES ----------------
-
-
 app.use("/api/auth", authLimiter, require("./routes/authRoutes"));
-
-
 app.use("/api/tasks", require("./routes/taskRoutes"));
-
-
-// Note: Make sure your aiRoutes.js file exists in the routes folder!
 app.use("/api/ai", require("./routes/aiRoutes"));
 
+// ---------------- PAYMENT ----------------
 app.post("/api/payment/create-checkout-session", async (req, res) => {
   try {
     if (!stripe) return res.status(500).json({ msg: "Stripe not configured" });
 
-    const clientURL = process.env.CLIENT_URL || "http://localhost:5173";
+    const clientURL = process.env.CLIENT_URL;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
         {
           price_data: {
             currency: "inr",
-            product_data: { name: "TaskMatrix Pro " },
+            product_data: { name: "TaskMatrix Pro" },
             unit_amount: 50000,
           },
           quantity: 1,
@@ -89,30 +84,42 @@ app.post("/api/payment/create-checkout-session", async (req, res) => {
       success_url: `${clientURL}/success`,
       cancel_url: `${clientURL}/dashboard`,
     });
+
     res.status(200).json({ url: session.url });
   } catch (err) {
     res.status(400).json({ msg: "Stripe Error", error: err.message });
   }
 });
 
+// ---------------- HEALTH CHECK (NEW ✅) ----------------
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    message: "TaskMatrix backend is live 🚀",
+  });
+});
 
+// ---------------- ROOT ----------------
 app.get("/", (req, res) => {
-  res.send("TaskMatrix API is Running Fine! ");
+  res.send("TaskMatrix API is Running Fine!");
 });
 
+// ---------------- 404 ----------------
 app.use((req, res) => {
-  res.status(404).json({ msg: "Route not found - Check path carefully!" });
+  res.status(404).json({ msg: "Route not found" });
 });
 
+// ---------------- ERROR HANDLER ----------------
 app.use((err, req, res, next) => {
-  console.error("SERVER ERROR:", err.stack);
+  console.error("SERVER ERROR:", err.message);
   res.status(500).json({
     msg: "Internal Server Error",
     error: process.env.NODE_ENV === "production" ? null : err.message,
   });
 });
 
+// ---------------- SERVER ----------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(` Server running on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
