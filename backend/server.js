@@ -31,19 +31,12 @@ app.use(globalLimiter);
 
 // ---------------- CORS (FIXED ✅) ----------------
 const allowedOrigins = [
-  "https://prodesk-capstone-task-matrix.vercel.app/" 
+  "https://prodesk-capstone-task-matrix.vercel.app"
 ];
-
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log("CORS Blocked:", origin);
-        callback(new Error("CORS blocked"));
-      }
-    },
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
